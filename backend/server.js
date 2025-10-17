@@ -12,6 +12,13 @@ app.get("/api/job-orders", (req, res) => {
   res.json(rows);
 });
 
+app.get('/api/job-orders/:id', (req, res) => {
+  const id = req.params.id
+  const jobOrder = db.prepare('SELECT * FROM job_orders WHERE id = ?').get(id)
+  if (!jobOrder) return res.status(404).json({ error: 'Job Order not found' })
+  res.json(jobOrder)
+})
+
 app.get("/api/job-orders/:id/manifests", (req, res) => {
   const rows = db
     .prepare("SELECT * FROM manifests WHERE job_order_id = ?")

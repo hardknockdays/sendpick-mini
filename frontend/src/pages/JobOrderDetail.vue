@@ -27,10 +27,14 @@
     </table>
 
     <!-- Track via Map -->
-    <button @click="trackMap"
-      class="mt-4 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">
+    <button
+      @click="trackMap"
+      :disabled="!jobOrder.origin || !jobOrder.destination"
+      class="mt-4 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+    >
       Track via Map
     </button>
+
   </div>
 </template>
 
@@ -69,6 +73,10 @@ const fetchJobOrder = async () => {
 
 // Track via Google Maps
 const trackMap = () => {
+  if (!jobOrder.value.origin || !jobOrder.value.destination) {
+    alert('Data job order belum tersedia.')
+    return
+  }
   const origin = encodeURIComponent(jobOrder.value.origin)
   const dest = encodeURIComponent(jobOrder.value.destination)
   window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}`, '_blank')
