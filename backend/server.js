@@ -2,9 +2,17 @@ import express from "express";
 import cors from "cors";
 import db from "./db.js";
 
+import dotenv from "dotenv";
+dotenv.config();
+
+// Import route weather
+import weatherRoute from "./api/routes/weather.js";  // atau path yang sesuai
+
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+app.get("/", (req, res) => res.send("Backend is running"));
 
 // routes
 app.get("/api/job-orders", (req, res) => {
@@ -26,5 +34,25 @@ app.get("/api/job-orders/:id/manifests", (req, res) => {
   res.json(rows);
 });
 
+// *** Tambahkan ini: weather API ***
+app.use("/api/weather", weatherRoute);
+
 const PORT = 3000;
 app.listen(PORT, () => console.log(`✅ Backend running on port ${PORT}`));
+
+// Add error handling middleware at the end
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ 
+    success: false,
+    message: 'Something went wrong!' 
+  });
+});
+
+// Handle 404
+app.use((req, res) => {
+  res.status(404).json({ 
+    success: false,
+    message: 'Route not found' 
+  });
+});

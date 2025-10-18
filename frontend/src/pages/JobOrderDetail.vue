@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-gray-100 p-6">
-    <div class="max-w-5xl mx-auto space-y-8">
+    <div class="max-w-6xl mx-auto space-y-8">
       <!-- Back -->
       <router-link
         to="/dashboard"
@@ -11,7 +11,7 @@
 
       <!-- Header -->
       <div
-        class="p-6 rounded-2xl border border-gray-800 bg-gray-900/50 backdrop-blur-md shadow-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        class="p-6 rounded-2xl border border-gray-800 bg-gray-900/60 backdrop-blur-md shadow-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
       >
         <div>
           <h1
@@ -34,22 +34,87 @@
 
       <!-- Job Info -->
       <div
-        class="p-6 rounded-xl border border-gray-800 bg-gray-900/60 backdrop-blur-md shadow-lg"
+        class="p-6 rounded-xl border border-gray-800 bg-gray-900/70 backdrop-blur-md shadow-lg"
       >
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <!-- Origin + Weather -->
           <div>
             <p class="text-sm text-gray-400">Origin</p>
-            <p class="text-lg font-medium text-blue-300">{{ jobOrder.origin || '-' }}</p>
+
+            <div
+              class="mt-4 p-4 rounded-xl border border-blue-700/30 bg-gradient-to-br from-blue-900/40 to-indigo-900/30 backdrop-blur-md shadow-lg"
+            >
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <!-- Left: Weather icon + city + temperature -->
+                <div class="flex flex-col gap-1">
+                  <h3 class="text-lg font-semibold text-blue-300 flex items-center gap-1">
+                    <span>{{ weather_org?.weather_description != null ? getWeatherIcon(weather_org.weather_description) : '' }}</span>
+                    {{ jobOrder.origin || '--' }}
+                  </h3>
+                  <p class="text-2xl font-bold text-blue-400">
+                    {{ weather_org?.temp != null ? weather_org.temp + '°C' : '--' }}
+                  </p>
+                  <p class="text-xs text-gray-400">
+                    Feels like {{ weather_org?.feels_like != null ? weather_org.feels_like + '°C' : '--' }}
+                  </p>
+                </div>
+
+                <!-- Right: Additional info -->
+                <div class="text-gray-400 text-xs space-y-1 text-right">
+                  <p>Humidity: {{ weather_org?.humidity != null ? weather_org.humidity + '%' : '--' }}</p>
+                  <p>Precipitation: {{ weather_org?.precipitation != null ? weather_org.precipitation + '%' : '--' }}</p>
+                  <p>
+                    Wind: 
+                    {{ weather_org?.wind_speed != null ? (weather_org.wind_speed * 3.6).toFixed(1) + ' km/h' : '--' }}
+                    {{ weather_org?.wind_deg != null ? '(' + windDirection(weather_org.wind_deg) + ')' : '' }}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
+
+          <!-- Destination + Weather (tetap seperti sebelumnya) -->
           <div>
             <p class="text-sm text-gray-400">Destination</p>
-            <p class="text-lg font-medium text-green-300">{{ jobOrder.destination || '-' }}</p>
+
+            <div
+              class="mt-4 p-4 rounded-xl border border-blue-700/30 bg-gradient-to-br from-blue-900/40 to-indigo-900/30 backdrop-blur-md shadow-lg"
+            >
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <!-- Left: Weather icon + city + temperature -->
+                <div class="flex flex-col gap-1">
+                  <h3 class="text-lg font-semibold text-blue-300 flex items-center gap-1">
+                    <span>{{ weather_des?.weather_description != null ? getWeatherIcon(weather_des.weather_description) : '' }}</span>
+                    {{ jobOrder.destination || '--' }}
+                  </h3>
+                  <p class="text-2xl font-bold text-blue-400">
+                    {{ weather_des?.temp != null ? weather_des.temp + '°C' : '--' }}
+                  </p>
+                  <p class="text-xs text-gray-400">
+                    Feels like {{ weather_des?.feels_like != null ? weather_des.feels_like + '°C' : '--' }}
+                  </p>
+                </div>
+
+                <!-- Right: Additional info -->
+                <div class="text-gray-400 text-xs space-y-1 text-right">
+                  <p>Humidity: {{ weather_des?.humidity != null ? weather_des.humidity + '%' : '--' }}</p>
+                  <p>Precipitation: {{ weather_des?.precipitation != null ? weather_des.precipitation + '%' : '--' }}</p>
+                  <p>
+                    Wind: 
+                    {{ weather_des?.wind_speed != null ? (weather_des.wind_speed * 3.6).toFixed(1) + ' km/h' : '--' }}
+                    {{ weather_des?.wind_deg != null ? '(' + windDirection(weather_des.wind_deg) + ')' : '' }}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-          <div>
+
+          <!-- Status -->
+          <div class="flex flex-col items-center justify-center gap-1">
             <p class="text-sm text-gray-400">Status</p>
             <span
               :class="[
-                'inline-block px-3 py-1 text-sm font-semibold rounded-full mt-1',
+                'inline-block px-3 py-1 sm:px-5 sm:py-2 text-sm sm:text-base font-semibold rounded-full mt-1 text-center',
                 jobOrder.status === 'Pending'
                   ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-400/30'
                   : jobOrder.status === 'Ongoing'
@@ -65,32 +130,9 @@
         </div>
       </div>
 
-      <!-- Weather Info -->
-      <div
-        v-if="weather"
-        class="p-6 rounded-xl border border-blue-700/30 bg-gradient-to-br from-blue-900/40 to-indigo-900/30 backdrop-blur-md shadow-lg hover:scale-[1.01] transition-transform"
-      >
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-xl font-semibold text-blue-300 mb-1">
-              🌤 {{ jobOrder.destination }}
-            </h2>
-            <p class="text-gray-300 capitalize">
-              {{ weather.weather[0].description }}
-            </p>
-          </div>
-          <div class="text-right">
-            <p class="text-4xl font-bold text-blue-400">
-              {{ (weather.main.temp - 273.15).toFixed(1) }}°C
-            </p>
-            <p class="text-sm text-gray-400">Feels like {{ (weather.main.feels_like - 273.15).toFixed(1) }}°C</p>
-          </div>
-        </div>
-      </div>
-
       <!-- Manifest Table -->
       <div
-        class="overflow-x-auto rounded-lg border border-gray-800 bg-gray-900/70 backdrop-blur-md shadow-2xl"
+        class="overflow-x-auto rounded-lg border border-gray-800 bg-gray-900/80 backdrop-blur-md shadow-2xl"
       >
         <table class="min-w-full border-collapse text-sm">
           <thead class="bg-gray-800/80 text-gray-300 uppercase text-xs">
@@ -111,12 +153,13 @@
           </tbody>
         </table>
       </div>
+      
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 
@@ -125,37 +168,103 @@ const id = route.params.id
 
 const manifests = ref([])
 const jobOrder = ref({})
-const weather = ref(null)
+const weather_des = ref(null)
+const weather_org = ref(null)
+
+const weatherIcon = computed(() => {
+  if (!weather.value || !weather.value.weather_description) return "❓";
+  const desc = weather.value.weather_description.toLowerCase();
+
+  if (desc.includes("hujan") || desc.includes("rain")) return "🌧";
+  if (desc.includes("berawan") || desc.includes("cloud")) return "⛅";
+  if (desc.includes("cerah") || desc.includes("clear")) return "☀️";
+  if (desc.includes("salju") || desc.includes("snow")) return "❄️";
+  if (desc.includes("badai") || desc.includes("storm") || desc.includes("thunder")) return "🌩";
+  return "🌤"; // default
+});
+
+const weatherMap = [
+  { keywords: ["hujan", "rain"], icon: "🌧" },
+  { keywords: ["berawan", "cloud"], icon: "⛅" },
+  { keywords: ["cerah", "clear"], icon: "☀️" },
+  { keywords: ["salju", "snow"], icon: "❄️" },
+  { keywords: ["badai", "storm", "thunder"], icon: "🌩" },
+];
+
+const getWeatherIcon = (description) => {
+  console.log(description)
+  if (!description) return "❓";
+  const desc = description.toLowerCase();
+
+  const found = weatherMap.find(w => w.keywords.some(k => desc.includes(k)));
+  return found ? found.icon : "🌤";
+}
+
+const windDirection = (deg) => {
+  if (deg == null) return '--';
+
+  const directions = [
+    { label: "N", arrow: "↑" },
+    { label: "NE", arrow: "↗" },
+    { label: "E", arrow: "→" },
+    { label: "SE", arrow: "↘" },
+    { label: "S", arrow: "↓" },
+    { label: "SW", arrow: "↙" },
+    { label: "W", arrow: "←" },
+    { label: "NW", arrow: "↖" },
+  ];
+
+  const index = Math.floor((deg + 22.5) / 45) % 8;
+  const dir = directions[index];
+
+  return `${dir.label} ${dir.arrow}`; // Contoh: "W ←"
+};
 
 const fetchManifests = async () => {
-  const res = await axios.get(`http://localhost:3000/api/job-orders/${id}/manifests`)
-  manifests.value = res.data
+  try {
+    const res = await axios.get(`http://localhost:3000/api/job-orders/${id}/manifests`)
+    manifests.value = res.data
+  } catch (err) {
+    console.error('Error fetching manifests:', err)
+  }
 }
 
 const fetchJobOrder = async () => {
-  const res = await axios.get(`http://localhost:3000/api/job-orders/${id}`)
-  jobOrder.value = res.data
-
-  // Ambil cuaca dari OpenWeather
-  const API_KEY = 'YOUR_OPENWEATHER_API_KEY'
   try {
-    const w = await axios.get(
-      `https://api.openweathermap.org/data/2.5/weather?q=${jobOrder.value.destination}&appid=${API_KEY}`
+    const res = await axios.get(`http://localhost:3000/api/job-orders/${id}`)
+    jobOrder.value = res.data
+    weather_des.value = await fetchWeather(jobOrder.value.destination)
+    weather_org.value = await fetchWeather(jobOrder.value.origin)
+  } catch (err) {
+    console.error('Error fetching job order:', err)
+  }
+}
+
+const fetchWeather = async (city) => {
+  if (!jobOrder.value.destination) return;
+  try {
+    const res_d = await axios.get(
+      `http://localhost:3000/api/weather/${encodeURIComponent(city)}`
     )
-    weather.value = w.data
+    console.log(res_d)
+    return res_d.data
   } catch (err) {
     console.error('Failed to fetch weather:', err)
+    return null
   }
 }
 
 const trackMap = () => {
   if (!jobOrder.value.origin || !jobOrder.value.destination) {
-    alert('Data job order belum tersedia.')
+    alert('Data job order belum lengkap.')
     return
   }
   const origin = encodeURIComponent(jobOrder.value.origin)
   const dest = encodeURIComponent(jobOrder.value.destination)
-  window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}`, '_blank')
+  window.open(
+    `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}`,
+    '_blank'
+  )
 }
 
 onMounted(() => {
