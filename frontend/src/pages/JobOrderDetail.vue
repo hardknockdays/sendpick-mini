@@ -129,6 +129,55 @@
           </div>
         </div>
       </div>
+      
+      <!-- Shipping Cost -->
+      <div class="mt-6 p-6 rounded-xl border border-gray-800 bg-gray-900/70 backdrop-blur-md shadow-lg">
+        <button
+          @click="showShippingForm = !showShippingForm"
+          class="bg-green-500 hover:bg-green-400 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors mb-3"
+        >
+          {{ showShippingForm ? 'Hide Shipping Cost' : 'Check Shipping Cost' }}
+        </button>
+
+        <div v-if="showShippingForm">
+          <!-- Form input berat -->
+          <form @submit.prevent="fetchShippingCustom">
+            <div class="flex gap-2 mb-3 items-center">
+              <label class="text-gray-300">Weight (kg):</label>
+              <input
+                type="number"
+                v-model.number="weight"
+                min="0.1"
+                step="0.1"
+                class="p-2 rounded bg-gray-800 text-white w-24"
+              />
+              <button
+                type="submit"
+                class="bg-blue-500 hover:bg-blue-400 text-white font-semibold py-1 px-3 rounded transition-colors"
+              >
+                Get Cost
+              </button>
+            </div>
+          </form>
+
+          <!-- Loading & Results -->
+          <div v-if="isLoadingShipping" class="text-gray-400">Loading...</div>
+          <div v-else-if="shippingResults.length === 0" class="text-gray-400">No shipping data.</div>
+          <div v-else class="space-y-3">
+            <div v-for="ship in shippingResults" :key="ship.service" class="p-3 rounded-lg bg-gray-800/50 flex justify-between items-center">
+              <div>
+                <p class="font-semibold text-gray-200">{{ ship.name }} ({{ ship.code }})</p>
+                <p class="text-gray-400 text-sm">{{ ship.service }} - {{ ship.description }}</p>
+              </div>
+              <div class="text-right">
+                <p class="text-green-400 font-bold">Rp {{ ship.cost != null ? ship.cost.toLocaleString() : '-' }}</p>
+                <p class="text-gray-400 text-xs">{{ ship.etd || '-' }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
       <!-- Manifest Table -->
       <div
@@ -153,13 +202,13 @@
           </tbody>
         </table>
       </div>
-      
+
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 
@@ -168,20 +217,9 @@ const id = route.params.id
 
 const manifests = ref([])
 const jobOrder = ref({})
+const shippingResults = ref([]) // array untuk hasil ongkir
 const weather_des = ref(null)
 const weather_org = ref(null)
-
-const weatherIcon = computed(() => {
-  if (!weather.value || !weather.value.weather_description) return "❓";
-  const desc = weather.value.weather_description.toLowerCase();
-
-  if (desc.includes("hujan") || desc.includes("rain")) return "🌧";
-  if (desc.includes("berawan") || desc.includes("cloud")) return "⛅";
-  if (desc.includes("cerah") || desc.includes("clear")) return "☀️";
-  if (desc.includes("salju") || desc.includes("snow")) return "❄️";
-  if (desc.includes("badai") || desc.includes("storm") || desc.includes("thunder")) return "🌩";
-  return "🌤"; // default
-});
 
 const weatherMap = [
   { keywords: ["hujan", "rain"], icon: "🌧" },
@@ -220,6 +258,31 @@ const windDirection = (deg) => {
   return `${dir.label} ${dir.arrow}`; // Contoh: "W ←"
 };
 
+const isLoadingShipping = ref(false);
+const showShippingForm = ref(false)
+const weight = ref(1) // default 1kg
+
+const fetchShippingCustom = async () => {
+  if (!jobOrder.value.origin || !jobOrder.value.destination) return;
+  isLoadingShipping.value = true;
+  try {
+    const res = await axios.get("http://localhost:3000/api/shipping", {
+      params: {
+        origin: jobOrder.value.origin,
+        destination: jobOrder.value.destination,
+        weight: weight.value * 1000 // convert kg -> gram
+      }
+    });
+    shippingResults.value = res.data.results || [];
+    console.log("Shipping response:", shippingResults.value);
+  } catch (err) {
+    console.error("Failed to fetch shipping cost:", err);
+  } finally {
+    isLoadingShipping.value = false;
+  }
+};
+
+
 const fetchManifests = async () => {
   try {
     const res = await axios.get(`http://localhost:3000/api/job-orders/${id}/manifests`)
@@ -235,6 +298,9 @@ const fetchJobOrder = async () => {
     jobOrder.value = res.data
     weather_des.value = await fetchWeather(jobOrder.value.destination)
     weather_org.value = await fetchWeather(jobOrder.value.origin)
+    
+    // Ambil shipping cost
+    await fetchShipping()
   } catch (err) {
     console.error('Error fetching job order:', err)
   }

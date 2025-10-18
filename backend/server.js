@@ -5,8 +5,9 @@ import db from "./db.js";
 import dotenv from "dotenv";
 dotenv.config();
 
-// Import route weather
-import weatherRoute from "./api/routes/weather.js";  // atau path yang sesuai
+// Import API
+import weatherRoute from "./api/routes/weather.js";
+import shippingRoute from "./api/routes/ongkir.js";
 
 const app = express();
 app.use(cors());
@@ -34,8 +35,9 @@ app.get("/api/job-orders/:id/manifests", (req, res) => {
   res.json(rows);
 });
 
-// *** Tambahkan ini: weather API ***
+// *** Tambahkan ini: API ***
 app.use("/api/weather", weatherRoute);
+app.use("/api/shipping", shippingRoute);
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`✅ Backend running on port ${PORT}`));
