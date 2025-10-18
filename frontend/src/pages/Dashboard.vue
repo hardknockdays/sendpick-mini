@@ -10,6 +10,7 @@
       <div class="mb-6 flex justify-end">
         <input
           v-model="search"
+          name="search-customer"
           type="text"
           placeholder="🔍 Search Customer..."
           class="border border-gray-700 rounded-lg px-4 py-2 w-64 bg-gray-800 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
