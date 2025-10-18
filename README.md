@@ -52,8 +52,9 @@ sendpick-mini-main/
 │   ├── tailwind.config.js    # Konfigurasi TailwindCSS
 │   └── package.json          # Dependensi frontend
 │
+├── package.json              # Dependensi root (frontend & backend)
 ├── LICENSE                   # Lisensi proyek
-└── testQuest.txt              # Catatan / testing file
+└── testQuest.txt             # Catatan / testing file
 ```
 
 ---
